@@ -1,4 +1,4 @@
-package sz.schlamm.u2f;
+package sz.schlamm.u2f.crypto;
 
 import java.math.BigInteger;
 import java.security.KeyFactory;

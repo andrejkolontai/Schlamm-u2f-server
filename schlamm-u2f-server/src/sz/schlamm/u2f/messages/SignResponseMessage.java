@@ -1,6 +1,8 @@
-package sz.schlamm.u2f;
+package sz.schlamm.u2f.messages;
 
 import java.io.Serializable;
+
+import sz.schlamm.u2f.Util;
 
 public class SignResponseMessage implements Serializable{
 

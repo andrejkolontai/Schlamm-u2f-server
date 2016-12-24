@@ -1,18 +1,21 @@
-package sz.schlamm.u2f;
+package sz.schlamm.u2f.messages;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import sz.schlamm.u2f.KeyData;
+import sz.schlamm.u2f.Server;
+import sz.schlamm.u2f.Util;
 
 public class SignRequestMessage implements Serializable{
 
 	private static final long serialVersionUID = -2375369369670304761L;
 	
-	private final String appId;
+	final String appId;
 	private final byte[] challenge;
-	private final String version;
+	final String version;
 	private final List<RegisteredKey> keys;
 	
 	
@@ -21,7 +24,12 @@ public class SignRequestMessage implements Serializable{
 		this.appId = appId;
 		this.challenge = challenge;
 		this.version = Server.U2F_VERSION;
-		this.keys = userKeys.stream().map(RegisteredKey::new).collect(Collectors.toList());
+		this.keys = userKeys.stream().
+				map(k -> new RegisteredKey(
+						k.getKeyHandle(), 
+						this.appId, 
+						this.version)
+				).collect(Collectors.toList());
 	}
 
 	public String getAppId() {
@@ -42,36 +50,5 @@ public class SignRequestMessage implements Serializable{
 	
 	public byte[] getChallengeBytes(){
 		return this.challenge;
-	}
-
-	public class RegisteredKey implements Serializable {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-		
-		final byte[] keyHandle;
-		
-		private RegisteredKey(KeyData userKey) {
-			this.keyHandle = Arrays.copyOf(userKey.getKeyHandle(), userKey.getKeyHandle().length);
-		}
-
-		public String getKeyHandle() {
-			return Util.toB64(this.keyHandle);
-		}
-
-		public byte[] getKeyHandleBytes() {
-			return this.keyHandle;
-		}
-
-		
-		public String getVersion(){
-			return SignRequestMessage.this.version;
-		}
-		
-		public String getAppId(){
-			return SignRequestMessage.this.appId;
-		}
 	}
 }
