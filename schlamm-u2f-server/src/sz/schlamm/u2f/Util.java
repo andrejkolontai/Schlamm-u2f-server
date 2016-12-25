@@ -18,5 +18,6 @@ public class Util {
 		return Optional.ofNullable(b64).map(s -> Base64.getUrlDecoder().decode(s)).orElse(null);
 	}
 	
-	public static final Charset UTF8 = Charset.forName("UTF-8"); 
+	public static final Charset UTF8 = Charset.forName("UTF-8");
+	
 }
