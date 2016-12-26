@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Insert title here</title>
+	<script src="u2f-api.js"></script>
+	
+	<script>
+		
+		function info(msg) {
+			var li = document.createElement('li');
+			li.innerHTML = msg;
+			document.getElementById('msg').appendChild(li);
+		}
+		
+		function err(msg) {
+			document.getElementById('err').innerHTML = msg;
+		}
+
+	
+		function processRegRequest(registerRequest){
+			info('Insert your key and push the button');
+			console.log(registerRequest);
+			var keys = [];
+			registerRequest.keys.forEach(function(k){
+				keys.push({
+					keyHandle : k.keyHandle,
+					version : k.version
+				});
+			});
+			
+			var request = {
+				challenge: registerRequest.challenge,
+				version: registerRequest.version
+			};
+			
+			u2f.register(registerRequest.appId,[request], keys, function(response) {
+				console.log(response);
+				info('Got response from key');
+				var errorElement = document.getElementById('err');
+				if (response.errorCode  &amp;&amp; response.errorCode !== 0) {
+					switch (response.errorCode){
+						case u2f.ErrorCodes['OTHER_ERROR']: err('Unknown error');break;
+						case u2f.ErrorCodes['BAD_REQUEST']: err('No https? Wrong appID?');break;
+						case u2f.ErrorCodes['CONFIGURATION_UNSUPPORTED']: err('unsupported configuration (whatever that means)');break;
+						case u2f.ErrorCodes['DEVICE_INELIGIBLE']: err('I already know that key');break;
+						case u2f.ErrorCodes['TIMEOUT']: err('Timeout');break;
+						default: err('Unknown Error '+response.errorCode);break;
+					}
+					console.log(response);
+				}else{
+					console.log(response);
+					if (!response.challenge) {
+						response.challenge = registerRequest.challenge;
+					}
+					document.forms['registerForm']['registrationData'].value = response.registrationData;
+					document.forms['registerForm']['clientData'].value = response.clientData;
+					document.forms['registerForm']['version'].value = registerRequest.version;
+					document.getElementById('ok').innerHTML = 'success';
+					info('submitting response');
+					document.forms['registerForm'].submit();
+				}
+			},30);
+		}
+	
+		function register(){
+			info("Starting Registration process, request challenge from server");
+			var req = new XMLHttpRequest();
+			req.open("GET","RegisterServlet");
+			req.setRequestHeader("Accept","application/json");
+			req.onreadystatechange = function(){
+				if (this.readyState == 4) {
+					switch(this.status) {
+						case 200: {
+							var request = JSON.parse(this.responseText);
+						    info('Got challenge from server');
+						    processRegRequest(request);
+						    break;
+						}
+						default: {
+							err('Something went horribly wrong');
+						}
+					}
+				}
+			};
+			req.send(null);
+		}
+	</script>
+
+</head>
+<body>
+	<p>
+		Registration
+	</p>
+	<div id="status">
+		<div id="msg" style="color: blue"/>
+		<div id="err" style="color: red"/>
+		<div id="ok" style="color: green"/>
+	</div>
+
+	<form action="RegisterServlet" method="post" id="registerForm">
+		<input type="hidden" name="registrationData" value=""/>
+		<input type="hidden" name="clientData" value=""/>
+		<input type="hidden" name="version" value=""/>
+	</form>
+
+	<script>
+		register();
+	</script>
+</body>
+</html>
