@@ -16,6 +16,17 @@ public class RegistrationResponseMessage implements Serializable {
 	public RegistrationResponseMessage() {
 	}
 
+	public RegistrationResponseMessage(byte[] registrationData,	byte[] clientData, String version) {
+		super();
+		this.registrationData = registrationData;
+		this.clientData = clientData;
+		this.version = version;
+	}
+	
+	public RegistrationResponseMessage(String registrationData,	String clientData, String version) {
+		this(Util.fromB64(registrationData),Util.fromB64(clientData),version);
+	}
+
 	public String getVersion() {
 		return version;
 	}

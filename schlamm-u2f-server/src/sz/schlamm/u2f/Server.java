@@ -1,6 +1,5 @@
 package sz.schlamm.u2f;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -18,10 +17,12 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.security.cert.CertificateException;
@@ -34,6 +35,7 @@ import sz.schlamm.u2f.messages.RegistrationRequestMessage;
 import sz.schlamm.u2f.messages.RegistrationResponseMessage;
 import sz.schlamm.u2f.messages.SignRequestMessage;
 import sz.schlamm.u2f.messages.SignResponseMessage;
+import sz.schlamm.u2f.messages.SignatureData;
 
 public class Server implements Serializable{
 
@@ -93,13 +95,18 @@ public class Server implements Serializable{
 		if (!typ.equals(clientData.getTyp())){
 			throw new U2FValidationException("unexpected typ in clientData, expected "+typ+", got"+clientData.getTyp());
 		}
+		
+		Set<String> allowedOrigins;
+		
 		if (this.origins.isEmpty()){
-			log.warning("no valid origins specified, accepting any origin");
+			log.warning("no valid origins specified, taking appId as origin");
+			allowedOrigins = Collections.singleton(normalizeOrigin(appId));
 		}else{
-			log.info("validating origin, allowed: "+this.origins);
-			if (!this.origins.contains(normalizeOrigin(clientData.getOrigin()))){
-				throw new U2FValidationException("origin "+clientData.getOrigin()+" is none of the accepted origins");
-			}
+			allowedOrigins = this.origins;
+		}
+		log.info("validating origin, allowed: "+allowedOrigins);
+		if (!allowedOrigins.contains(normalizeOrigin(clientData.getOrigin()))){
+			throw new U2FValidationException("origin "+clientData.getOrigin()+" is none of the accepted origins");
 		}
 	}
 	
@@ -137,6 +144,7 @@ public class Server implements Serializable{
 			log.info("clientData: "+clientData.toString());
 			
 			if (!clientData.getChallenge().equals(request.getChallenge())){
+				log.log(Level.SEVERE,"Request challenge: "+request.getChallenge()+", Response challenge: "+clientData.getChallenge());
 				throw new U2FValidationException("the request challenge does not match the response challenge");
 			}
 			
@@ -194,11 +202,15 @@ public class Server implements Serializable{
 	
 	private KeyData processSignResponse(LoginState loginState,Collection<KeyData> userKeys) throws U2FException {
 		
+		log.info("processing sign response");
 		try {
 			SignResponseMessage response = loginState.getSignResponseMessage();
 			SignRequestMessage request = loginState.getSignRequestMessage();
 			
 			ClientData clientData = ClientData.fromBytes(response.getClientDataBytes());
+			log.info(clientData.toString());
+			SignatureData signatureData = SignatureData.fromBytes(response.getSignatureDataBytes());
+			log.info(signatureData.toString());
 			
 			if (!clientData.getChallenge().equals(request.getChallenge())){
 				throw new U2FValidationException("the request challenge does not match the response challenge");
@@ -212,29 +224,20 @@ public class Server implements Serializable{
 					filter(uk -> Arrays.equals(response.getKeyHandleBytes(), uk.getKeyHandle())).
 					findAny().orElseThrow(() -> new U2FException("User key not found, keyhandle "+response.getKeyHandle()));
 			
-			ByteBuffer sigIn = ByteBuffer.wrap(response.getSignatureDataBytes());
-			
-			int userPresence = sigIn.get() & 0xff;
+			int userPresence = signatureData.getUserPresence();
 			if ((userPresence & 0x1) != 1) {
 				throw new U2FValidationException("user presence was 0 (=user not present)");
 			}
 			
-			int counter = sigIn.getInt();
+			int counter = signatureData.getCounter();
 			if (keyData.getCounter() > counter) {
 				throw new U2FValidationException("device counter went backwards (cloned device?) our counter: "+keyData.getCounter()+", device counter "+counter);
 			}
-			
 			keyData.setCounter(counter);
-			
-			byte[] signature = new byte[sigIn.remaining()];
-			sigIn.get(signature);
 			
 			MessageDigest hasher = MessageDigest.getInstance("SHA-256");
 			
 			byte[] sigSource = new byte[32 + 1 + 4 + 32];
-			
-/*		String clientDataStr = new String(response.getClientDataBytes());
-			System.out.println("Client Data "+clientDataStr);*/
 			
 			ByteBuffer.wrap(sigSource).
 					put(hasher.digest(this.appId.getBytes())).
@@ -249,7 +252,7 @@ public class Server implements Serializable{
 			sig.initVerify(bpub);
 			sig.update(sigSource);
 			
-			boolean result = sig.verify(signature);
+			boolean result = sig.verify(signatureData.getSignature());
 			if (!result){
 				throw new U2FValidationException("signature invalid");
 			}

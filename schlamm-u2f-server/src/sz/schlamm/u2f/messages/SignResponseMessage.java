@@ -16,6 +16,21 @@ public class SignResponseMessage implements Serializable{
 	private byte[] keyHandle;
 	
 	
+	public SignResponseMessage() {
+		super();
+	}
+
+	public SignResponseMessage(byte[] signatureData, byte[] clientData,byte[] keyHandle) {
+		super();
+		this.signatureData = signatureData;
+		this.clientData = clientData;
+		this.keyHandle = keyHandle;
+	}
+	
+	public SignResponseMessage(String signatureData, String clientData,String keyHandle) {
+		this(Util.fromB64(signatureData),Util.fromB64(clientData),Util.fromB64(keyHandle));
+	}
+	
 	public String getSignatureData() {
 		return Util.toB64(this.signatureData);
 	}

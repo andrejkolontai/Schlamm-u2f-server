@@ -12,6 +12,16 @@ import java.security.spec.EllipticCurve;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 
+
+/**
+ * This class is used to convert the public key data into a java.security.PublicKey
+ * we can check the signatures with. 
+ * 
+ * Unfortunately, there is no "factory" like method in java where we just say
+ * that's a NIST p-256 Public Key, stick the bytes in and get a PublicKey 
+ * object out. But, with a little research, we can do this ourselves.
+ *
+ */
 public class NISTP256KeyFactory {
 	
 	/*NIST P-256 Parameters
@@ -42,8 +52,17 @@ public class NISTP256KeyFactory {
 	private static final BigInteger order = new BigInteger("115792089210356248762697446949407573529996955224135760342422259061068512044369");
 	
 	private static final ECParameterSpec nistP256spec = new ECParameterSpec(curve, generator, order, 1);
-	
-	
+
+	/**
+	 * This method takes the public key bytes we have saved for the user in the 
+	 * registration process and returns a PublicKey object we can check the 
+	 * signature with
+	 * 
+	 * @param encodedKey the public key bytes
+	 * @return the PublicKey object
+	 * @throws NoSuchAlgorithmException
+	 * @throws InvalidKeySpecException
+	 */
 	public static PublicKey decodeKey(byte[] encodedKey) throws NoSuchAlgorithmException, InvalidKeySpecException{
 		if (encodedKey.length!=65) {
 			throw new IllegalArgumentException("This key might be correct. But I don't know how to handle it, it does not have 65 bytes");
