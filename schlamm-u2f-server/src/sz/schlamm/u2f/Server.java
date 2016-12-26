@@ -230,7 +230,7 @@ public class Server implements Serializable{
 			}
 			
 			int counter = signatureData.getCounter();
-			if (keyData.getCounter() > counter) {
+			if (keyData.getCounter() >= counter) {
 				throw new U2FValidationException("device counter went backwards (cloned device?) our counter: "+keyData.getCounter()+", device counter "+counter);
 			}
 			keyData.setCounter(counter);
