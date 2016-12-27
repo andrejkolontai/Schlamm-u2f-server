@@ -1,6 +1,10 @@
 package sz.schlamm.u2f.messages;
 
 import java.io.Serializable;
+import java.io.StringReader;
+
+import javax.json.Json;
+import javax.json.JsonObject;
 
 import sz.schlamm.u2f.Util;
 
@@ -60,7 +64,25 @@ public class RegistrationResponseMessage implements Serializable {
 	public void setClientData(String clientData) {
 		this.clientData = Util.fromB64(clientData);
 	}
+	
+	public String toJSON(){
+		return Json.createObjectBuilder().
+				add("registrationData", this.getRegistrationData()).
+				add("clientData", this.getClientData()).
+				add("version", this.getVersion()).
+				build().
+				toString();
+	}
 
+	public static RegistrationResponseMessage fromJSON(String json){
+		JsonObject parsed = Json.createReader(new StringReader(json)).readObject();
+		return new RegistrationResponseMessage(
+			parsed.getString("registrationData"), 
+			parsed.getString("clientData"), 
+			parsed.getString("version")
+		);
+	}
+	
 	@Override
 	public String toString() {
 		return "RegistrationResponseMessage [getRegistrationData()="

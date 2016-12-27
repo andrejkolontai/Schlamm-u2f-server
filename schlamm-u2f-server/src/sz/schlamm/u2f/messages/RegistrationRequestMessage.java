@@ -5,6 +5,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+
 import sz.schlamm.u2f.KeyData;
 import sz.schlamm.u2f.Server;
 import sz.schlamm.u2f.Util;
@@ -47,5 +50,26 @@ public class RegistrationRequestMessage implements Serializable{
 
 	public List<RegisteredKey> getKeys() {
 		return keys;
+	}
+	
+	public String toJSON(){
+		return Json.createObjectBuilder().
+			add("challenge", this.getChallenge()).
+			add("version", this.getVersion()).
+			add("appId", this.getAppId()).
+			add(
+				/*The user might already have registered this device. So we need to
+				 * send all the user's key handles to the client so it can check
+				 * whether this device is already registered*/
+				"keys",
+				this.getKeys().stream().map(RegisteredKey::toJSON).
+				collect(Json::createArrayBuilder, JsonArrayBuilder::add, JsonArrayBuilder::add)
+			).build().toString();
+	}
+
+	@Override
+	public String toString() {
+		return "RegistrationRequestMessage [challenge=" + Util.toB64(challenge) + ", version=" + version
+				+ ", appId=" + appId + ", keys=" + keys + "]";
 	}
 }

@@ -2,6 +2,9 @@ package sz.schlamm.u2f.messages;
 
 import java.io.Serializable;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+
 import sz.schlamm.u2f.Util;
 
 /**
@@ -45,4 +48,13 @@ public class RegisteredKey implements Serializable {
 	public String getAppId(){
 		return this.appId;
 	}
+	
+	public JsonObject toJSON()  {
+		return Json.createObjectBuilder().
+				add("appId", this.getAppId()).
+				add("version", this.getVersion()).
+				add("keyHandle", this.getKeyHandle()).
+				build();
+		
+	};
 }

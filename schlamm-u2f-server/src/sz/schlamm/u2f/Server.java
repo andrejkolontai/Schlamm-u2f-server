@@ -154,6 +154,7 @@ public class Server implements Serializable{
 			log.info("registrationData: "+registrationData.toString());
 			
 			validateAttestation(registrationData.getAttestationCert());
+			String manufacturer = registrationData.getAttestationCert().getIssuerDN().toString();
 			
 			MessageDigest hasher = MessageDigest.getInstance("SHA-256");
 			byte[] appHash = hasher.digest(this.appId.getBytes("UTF-8"));
@@ -174,7 +175,7 @@ public class Server implements Serializable{
 			
 			boolean result = sig.verify(registrationData.getSignature());
 			if (result) {
-				return new KeyData(registrationData.getPublicKey(),registrationData.getKeyHandle(),this.appId,0);
+				return new KeyData(registrationData.getPublicKey(),registrationData.getKeyHandle(),this.appId,0,manufacturer);
 			}else{
 				throw new SignatureInvalidException();
 			}

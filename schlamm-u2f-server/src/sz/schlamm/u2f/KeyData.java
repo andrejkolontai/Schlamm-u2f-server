@@ -11,13 +11,15 @@ public class KeyData implements Serializable {
 	private final byte[] keyHandle;
 	private final String appId;
 	private int counter;
+	private final String manufacturer;
 	
-	public KeyData(byte[] publicKey, byte[] keyHandle, String appId,int counter) {
+	public KeyData(byte[] publicKey, byte[] keyHandle, String appId,int counter,String manufacturer) {
 		super();
 		this.publicKey = publicKey;
 		this.keyHandle = keyHandle;
 		this.appId = appId;
 		this.counter = counter;
+		this.manufacturer = manufacturer;
 	}
 
 	public int getCounter() {
@@ -40,10 +42,15 @@ public class KeyData implements Serializable {
 		return appId;
 	}
 
+	public String getManufacturer() {
+		return manufacturer;
+	}
+
 	@Override
 	public String toString() {
-		return "KeyData [publicKey=" + Util.toHex(publicKey)
-				+ ", keyHandle=" + Util.toHex(keyHandle) + ", appId="
-				+ appId + ", counter=" + counter + "]";
+		return "KeyData [publicKey=" + Util.toB64(publicKey) + ", keyHandle=" + Util.toB64(keyHandle)
+				+ ", appId=" + appId + ", counter=" + counter + ", manufacturer=" + manufacturer + "]";
 	}
+	
+	
 }
