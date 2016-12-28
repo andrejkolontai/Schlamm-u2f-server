@@ -5,6 +5,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+
 import sz.schlamm.u2f.KeyData;
 import sz.schlamm.u2f.Server;
 import sz.schlamm.u2f.Util;
@@ -50,5 +53,18 @@ public class SignRequestMessage implements Serializable{
 	
 	public byte[] getChallengeBytes(){
 		return this.challenge;
+	}
+
+	public String toJSON() {
+		return Json.createObjectBuilder().
+			add("appId", this.appId).
+			add("challenge", Util.toB64(challenge)).
+			add("version", this.version).
+			add("keys",keys.stream().
+					map(RegisteredKey::toJSON).
+					collect(Json::createArrayBuilder, JsonArrayBuilder::add, JsonArrayBuilder::add)
+			).
+			build().
+			toString();
 	}
 }

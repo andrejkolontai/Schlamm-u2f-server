@@ -1,6 +1,10 @@
 package sz.schlamm.u2f.messages;
 
 import java.io.Serializable;
+import java.io.StringReader;
+
+import javax.json.Json;
+import javax.json.JsonObject;
 
 import sz.schlamm.u2f.Util;
 
@@ -60,5 +64,24 @@ public class SignResponseMessage implements Serializable{
 	
 	public byte[] getSignatureDataBytes() {
 		return this.signatureData;
+	}
+	
+	
+	public String toJSON(){
+		return Json.createObjectBuilder().
+				add("signatureData", this.getSignatureData()).
+				add("clientData", this.getClientData()).
+				add("keyHandle", this.getKeyHandle()).
+				build().
+				toString();
+	}
+
+	public static SignResponseMessage fromJSON(String json){
+		JsonObject parsed = Json.createReader(new StringReader(json)).readObject();
+		return new SignResponseMessage(
+			parsed.getString("signatureData"), 
+			parsed.getString("clientData"), 
+			parsed.getString("keyHandle")
+		);
 	}
 }
