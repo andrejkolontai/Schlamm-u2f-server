@@ -1,0 +1,11 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'eclipse-wtp'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile group: 'javax.json', name: 'javax.json-api', version: '1.0'
+}

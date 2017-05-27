@@ -1,0 +1,16 @@
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'eclipse'
+apply plugin: 'eclipse-wtp'
+
+
+repositories {
+        mavenCentral()
+}
+
+dependencies {
+        compile group: 'javax.json', name: 'javax.json-api', version: '1.0'
+	compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
+	compile project(path: ':schlamm-u2f-server')
+}
+
