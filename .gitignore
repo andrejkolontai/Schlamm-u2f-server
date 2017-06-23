@@ -1,7 +1,7 @@
 tmp/
 build/
 bin/
-.gradle
+.gradle/
 .project
 .settings
 .classpath
